@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-afdca4b1-f22e-4787-995d-f3b0a01bed64/styles.css">
+<style>
+html,body{margin:0;padding:0;background:#07060b;}
+body{font-family:var(--font-body);color:#f5ead8;overflow-x:hidden;}
+*{box-sizing:border-box;}
+::selection{background:rgba(198,113,57,.45);}
+input,button,textarea{font-family:inherit;}
+input::placeholder{color:rgba(245,234,216,.35);}
+a{color:#e08a3c;text-decoration:none;}
+a:hover{color:#f0a55e;}
+:focus-visible{outline:2px solid #e08a3c;outline-offset:2px;}
+@keyframes fl-rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes fl-pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+.fl-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.fl-scroll::-webkit-scrollbar{width:8px;}
+.fl-scroll::-webkit-scrollbar-thumb{background:rgba(245,234,216,.16);border-radius:99px;}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+</style>
+</helmet>
+<div style="position:relative;min-height:100vh;width:100%;overflow:hidden;background:#07060b;">
+<canvas ref="{{ bgRef }}" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;"></canvas>
+
+<sc-if value="{{ introVisible }}" hint-placeholder-val="{{ true }}">
+<div ref="{{ introRef }}" style="position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;transition:opacity .8s ease;">
+<div style="font-family:var(--font-heading);font-size:clamp(34px,7vw,76px);letter-spacing:.02em;color:#f5ead8;text-shadow:0 0 40px rgba(198,113,57,.6);">FocusList</div>
+<div style="font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:rgba(245,234,216,.55);animation:fl-pulse 2.4s ease-in-out infinite;">Entering the focus core</div>
+<button type="button" onClick="{{ skipIntro }}" style="pointer-events:auto;margin-top:14px;padding:9px 22px;border-radius:999px;border:1px solid rgba(245,234,216,.28);background:rgba(245,234,216,.06);color:#f5ead8;font-size:13px;cursor:pointer;backdrop-filter:blur(6px);" style-hover="background:rgba(245,234,216,.14)">Skip</button>
+</div>
+</sc-if>
+
+<div ref="{{ shellRef }}" style="position:relative;z-index:10;min-height:100vh;padding:22px clamp(14px,3vw,38px) 40px;opacity:0;transition:opacity .9s ease;">
+
+<header style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;margin-bottom:22px;">
+<div style="display:flex;align-items:baseline;gap:12px;">
+<span style="font-family:var(--font-heading);font-size:26px;color:#f5ead8;">FocusList</span>
+<span style="font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:rgba(245,234,216,.45);">Focus core online</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;">
+<span style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,234,216,.4);margin-right:4px;">View</span>
+<button type="button" aria-label="Zoom out" onClick="{{ zoomOut }}" style="width:38px;height:38px;border-radius:999px;border:1px solid rgba(245,234,216,.2);background:rgba(245,234,216,.05);color:#f5ead8;font-size:18px;cursor:pointer;line-height:1;" style-hover="background:rgba(245,234,216,.14)">−</button>
+<button type="button" aria-label="Zoom in" onClick="{{ zoomIn }}" style="width:38px;height:38px;border-radius:999px;border:1px solid rgba(245,234,216,.2);background:rgba(245,234,216,.05);color:#f5ead8;font-size:18px;cursor:pointer;line-height:1;" style-hover="background:rgba(245,234,216,.14)">+</button>
+<button type="button" onClick="{{ resetView }}" style="height:38px;padding:0 16px;border-radius:999px;border:1px solid rgba(245,234,216,.2);background:rgba(245,234,216,.05);color:#f5ead8;font-size:13px;cursor:pointer;" style-hover="background:rgba(245,234,216,.14)">Reset view</button>
+</div>
+</header>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;align-items:start;max-width:1680px;margin:0 auto;">
+
+<section aria-label="Task constellation" style="position:relative;min-width:0;border-radius:28px;border:1px solid rgba(245,234,216,.13);background:rgba(18,15,24,.5);backdrop-filter:blur(14px);overflow:hidden;">
+<div style="position:relative;width:100%;height:clamp(380px,56vh,580px);">
+<canvas ref="{{ constRef }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;"></canvas>
+<div ref="{{ coreLabelRef }}" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+<div ref="{{ pctRef }}" style="font-family:var(--font-heading);font-size:46px;line-height:1;color:#f5ead8;text-shadow:0 0 30px rgba(198,113,57,.55);">0%</div>
+<div ref="{{ fracRef }}" style="margin-top:6px;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,234,216,.55);">0 / 0 complete</div>
+</div>
+<div ref="{{ tipRef }}" style="position:absolute;left:0;top:0;display:none;pointer-events:none;padding:8px 12px;border-radius:14px;background:rgba(10,8,14,.9);border:1px solid rgba(245,234,216,.18);font-size:12px;color:#f5ead8;max-width:220px;transform:translate(-50%,-140%);"></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px;padding:0 18px 18px;">
+<div style="flex:1 1 110px;min-width:0;padding:12px 14px;border-radius:18px;background:rgba(245,234,216,.05);">
+<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,234,216,.45);">Total</div>
+<div ref="{{ nTotalRef }}" style="font-family:var(--font-heading);font-size:26px;color:#f5ead8;">0</div>
+</div>
+<div style="flex:1 1 110px;min-width:0;padding:12px 14px;border-radius:18px;background:rgba(142,160,115,.12);">
+<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(174,191,146,.75);">Completed</div>
+<div ref="{{ nDoneRef }}" style="font-family:var(--font-heading);font-size:26px;color:#c3d3a5;">0</div>
+</div>
+<div style="flex:1 1 110px;min-width:0;padding:12px 14px;border-radius:18px;background:rgba(198,113,57,.14);">
+<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(224,138,60,.8);">Pending</div>
+<div ref="{{ nPendRef }}" style="font-family:var(--font-heading);font-size:26px;color:#f0a55e;">0</div>
+</div>
+</div>
+<p class="fl-sr" aria-live="polite">{{ liveText }}</p>
+
+<sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:14px;right:14px;bottom:14px;padding:16px 18px;border-radius:22px;border:1px solid rgba(245,234,216,.16);background:rgba(12,10,17,.92);backdrop-filter:blur(10px);animation:fl-rise .28s ease both;">
+<div style="display:flex;align-items:flex-start;gap:12px;">
+<span style="margin-top:7px;width:10px;height:10px;border-radius:99px;flex:none;background:{{ sel.color }};box-shadow:0 0 14px {{ sel.color }};"></span>
+<div style="flex:1;min-width:0;">
+<div style="font-family:var(--font-heading);font-size:19px;color:#f5ead8;word-break:break-word;">{{ sel.title }}</div>
+<div style="margin-top:5px;font-size:12px;color:rgba(245,234,216,.55);">{{ sel.meta }}</div>
+</div>
+<button type="button" aria-label="Close task detail" onClick="{{ clearSelection }}" style="flex:none;width:32px;height:32px;border-radius:999px;border:1px solid rgba(245,234,216,.2);background:transparent;color:#f5ead8;cursor:pointer;line-height:1;">×</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+<button type="button" onClick="{{ sel.onToggle }}" style="padding:8px 16px;border-radius:999px;border:none;background:#c67139;color:#1a1007;font-size:13px;font-weight:700;cursor:pointer;">{{ sel.toggleLabel }}</button>
+<button type="button" onClick="{{ sel.onEdit }}" style="padding:8px 16px;border-radius:999px;border:1px solid rgba(245,234,216,.22);background:transparent;color:#f5ead8;font-size:13px;cursor:pointer;">Edit</button>
+<button type="button" onClick="{{ sel.onDelete }}" style="padding:8px 16px;border-radius:999px;border:1px solid rgba(217,90,60,.4);background:transparent;color:#e59074;font-size:13px;cursor:pointer;">Delete</button>
+</div>
+</div>
+</sc-if>
+</section>
+
+<section aria-label="Tasks" style="min-width:0;display:flex;flex-direction:column;gap:14px;">
+
+<form onSubmit="{{ onAdd }}" style="padding:18px;border-radius:28px;border:1px solid rgba(245,234,216,.13);background:rgba(18,15,24,.5);backdrop-filter:blur(14px);">
+<label for="fl-new" style="display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,234,216,.45);margin-bottom:8px;">New task</label>
+<div style="display:flex;flex-wrap:wrap;gap:10px;">
+<input id="fl-new" ref="{{ newRef }}" type="text" maxlength="120" placeholder="What deserves your focus?" style="flex:1 1 200px;min-width:0;height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(245,234,216,.18);background:rgba(245,234,216,.06);color:#f5ead8;font-size:15px;">
+<button type="submit" style="height:44px;padding:0 24px;border-radius:999px;border:none;background:#c67139;color:#1a1007;font-family:var(--font-heading);font-size:15px;cursor:pointer;" style-hover="background:#d9823f">Add task</button>
+</div>
+<div role="radiogroup" aria-label="Priority" style="display:flex;gap:8px;margin-top:12px;">
+<sc-for list="{{ newPriorities }}" as="p" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{ p.on }}" onClick="{{ p.onClick }}" style="flex:1;padding:9px 6px;border-radius:999px;font-size:12px;letter-spacing:.06em;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease;border:1px solid {{ p.border }};background:{{ p.bg }};color:{{ p.fg }};">{{ p.label }}</button>
+</sc-for>
+</div>
+<p ref="{{ errRef }}" role="alert" style="margin:10px 0 0;font-size:12px;color:#e59074;min-height:0;"></p>
+</form>
+
+<div style="padding:16px 18px;border-radius:28px;border:1px solid rgba(245,234,216,.13);background:rgba(18,15,24,.5);backdrop-filter:blur(14px);">
+<label for="fl-search" class="fl-sr">Search tasks</label>
+<input id="fl-search" ref="{{ searchRef }}" type="search" placeholder="Search tasks…" onInput="{{ onSearch }}" style="width:100%;height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(245,234,216,.18);background:rgba(245,234,216,.06);color:#f5ead8;font-size:14px;">
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+<sc-for list="{{ statusFilters }}" as="f" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{ f.on }}" onClick="{{ f.onClick }}" style="padding:7px 14px;border-radius:999px;font-size:12px;cursor:pointer;transition:background .2s ease,color .2s ease,border-color .2s ease;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.fg }};">{{ f.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+<sc-for list="{{ prioFilters }}" as="f" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{ f.on }}" onClick="{{ f.onClick }}" style="padding:7px 14px;border-radius:999px;font-size:12px;cursor:pointer;transition:background .2s ease,color .2s ease,border-color .2s ease;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.fg }};">{{ f.label }}</button>
+</sc-for>
+</div>
+<div style="margin-top:12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(245,234,216,.42);">{{ resultText }}</div>
+</div>
+
+<div style="padding:16px 18px;border-radius:28px;border:1px solid rgba(245,234,216,.13);background:rgba(18,15,24,.5);backdrop-filter:blur(14px);">
+<div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,234,216,.45);margin-bottom:12px;">Priority distribution</div>
+<sc-for list="{{ distribution }}" as="d" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:9px;">
+<span style="width:62px;flex:none;font-size:12px;color:rgba(245,234,216,.62);">{{ d.label }}</span>
+<span style="flex:1;height:8px;border-radius:99px;background:rgba(245,234,216,.08);overflow:hidden;">
+<span ref="{{ d.ref }}" style="display:block;height:100%;border-radius:99px;transform-origin:left center;transform:scaleX(0);transition:transform .6s cubic-bezier(.2,.8,.2,1);background:{{ d.color }};"></span>
+</span>
+<span style="width:26px;flex:none;text-align:right;font-size:13px;color:#f5ead8;">{{ d.count }}</span>
+</div>
+</sc-for>
+</div>
+
+<div class="fl-scroll" style="padding:8px;border-radius:28px;border:1px solid rgba(245,234,216,.13);background:rgba(18,15,24,.5);backdrop-filter:blur(14px);max-height:620px;overflow-y:auto;">
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:34px 22px;text-align:center;">
+<div style="width:74px;height:74px;margin:0 auto 16px;border-radius:999px;background:radial-gradient(circle at 50% 50%,rgba(224,138,60,.55),rgba(224,138,60,0) 70%);animation:fl-pulse 3.2s ease-in-out infinite;"></div>
+<div style="font-family:var(--font-heading);font-size:19px;color:#f5ead8;">{{ emptyTitle }}</div>
+<div style="margin-top:6px;font-size:13px;color:rgba(245,234,216,.5);">{{ emptyBody }}</div>
+</div>
+</sc-if>
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;">
+<sc-for list="{{ visible }}" as="t" hint-placeholder-count="4">
+<li style="display:flex;align-items:flex-start;gap:11px;padding:13px 14px;border-radius:20px;transition:background .2s ease;background:{{ t.rowBg }};animation:fl-rise .3s ease both;">
+<button type="button" aria-pressed="{{ t.done }}" aria-label="{{ t.toggleAria }}" onClick="{{ t.onToggle }}" style="flex:none;margin-top:1px;width:22px;height:22px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;transition:background .2s ease;border:1.5px solid {{ t.color }};background:{{ t.boxBg }};color:#120e08;">{{ t.check }}</button>
+<button type="button" onClick="{{ t.onSelect }}" style="flex:1;min-width:0;text-align:left;background:transparent;border:none;padding:0;cursor:pointer;">
+<span style="display:block;font-size:14.5px;line-height:1.35;word-break:break-word;color:{{ t.titleColor }};text-decoration:{{ t.deco }};">{{ t.title }}</span>
+<span style="display:block;margin-top:4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:{{ t.color }};">{{ t.meta }}</span>
+</button>
+<span style="display:flex;gap:4px;flex:none;">
+<button type="button" aria-label="{{ t.editAria }}" onClick="{{ t.onEdit }}" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(245,234,216,.16);background:transparent;color:rgba(245,234,216,.75);font-size:12px;cursor:pointer;" style-hover="background:rgba(245,234,216,.12)">✎</button>
+<button type="button" aria-label="{{ t.delAria }}" onClick="{{ t.onDelete }}" style="width:30px;height:30px;border-radius:999px;border:1px solid rgba(217,90,60,.3);background:transparent;color:#e59074;font-size:14px;cursor:pointer;" style-hover="background:rgba(217,90,60,.18)">×</button>
+</span>
+</li>
+</sc-for>
+</ul>
+</div>
+
+</section>
+</div>
+</div>
+
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ onBackdrop }}" style="position:fixed;inset:0;z-index:60;background:rgba(5,4,9,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;">
+<div role="dialog" aria-modal="true" aria-label="Edit task" ref="{{ dialogRef }}" onClick="{{ stop }}" style="width:100%;max-width:440px;padding:26px;border-radius:28px;border:1px solid rgba(245,234,216,.16);background:#14111b;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:fl-rise .25s ease both;">
+<div style="font-family:var(--font-heading);font-size:22px;color:#f5ead8;margin-bottom:18px;">Edit task</div>
+<label for="fl-edit" style="display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,234,216,.45);margin-bottom:8px;">Title</label>
+<input id="fl-edit" ref="{{ editRef }}" type="text" maxlength="120" onKeyDown="{{ onEditKey }}" style="width:100%;height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(245,234,216,.18);background:rgba(245,234,216,.06);color:#f5ead8;font-size:15px;">
+<div role="radiogroup" aria-label="Priority" style="display:flex;gap:8px;margin-top:16px;">
+<sc-for list="{{ editPriorities }}" as="p" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{ p.on }}" onClick="{{ p.onClick }}" style="flex:1;padding:10px 6px;border-radius:999px;font-size:12px;cursor:pointer;transition:background .2s ease;border:1px solid {{ p.border }};background:{{ p.bg }};color:{{ p.fg }};">{{ p.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end;">
+<button type="button" onClick="{{ closeEdit }}" style="padding:10px 20px;border-radius:999px;border:1px solid rgba(245,234,216,.2);background:transparent;color:#f5ead8;font-size:14px;cursor:pointer;">Cancel</button>
+<button type="button" onClick="{{ saveEdit }}" style="padding:10px 24px;border-radius:999px;border:none;background:#c67139;color:#1a1007;font-family:var(--font-heading);font-size:14px;cursor:pointer;">Save</button>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;calm&quot;,&quot;balanced&quot;,&quot;rich&quot;],&quot;default&quot;:&quot;balanced&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Cosmos&quot;},&quot;orbitSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0,&quot;max&quot;:2,&quot;step&quot;:0.1,&quot;default&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Cosmos&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tasks: [], q: '', status: 'all', prio: 'all',
+      selectedId: null, editingId: null, editPrio: 'medium',
+      newPrio: 'medium', intro: true
+    };
+    ['bgRef','constRef','shellRef','introRef','tipRef','pctRef','fracRef','nTotalRef','nDoneRef','nPendRef','newRef','searchRef','errRef','editRef','dialogRef','coreLabelRef']
+      .forEach(k => { this[k] = React.createRef(); });
+    this.barRefs = { high: React.createRef(), medium: React.createRef(), low: React.createRef() };
+    this.PC = { high: '#e08a3c', medium: '#ddb264', low: '#aebf92' };
+    this.nodes = new Map();
+    this.parts = [];
+    this.anim = { total: 0, done: 0, pend: 0, pct: 0 };
+    this.cam = { z: 0, target: 0, px: 0, py: 0, tpx: 0, tpy: 0 };
+    this.view = { s: 1, ts: 1, x: 0, y: 0, tx: 0, ty: 0 };
+    this.hoverId = null;
+    this.reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  /* ---------- storage ---------- */
+  uid() { return 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  load() {
+    let raw = null;
+    try { raw = localStorage.getItem('focuslist_tasks'); } catch (e) { raw = null; }
+    if (raw == null) return this.seed();
+    try {
+      const p = JSON.parse(raw);
+      if (!Array.isArray(p)) return [];
+      return p.filter(t => t && typeof t === 'object' && typeof t.title === 'string' && t.title.trim())
+        .slice(0, 300)
+        .map(t => ({
+          id: typeof t.id === 'string' && t.id ? t.id : this.uid(),
+          title: String(t.title).slice(0, 120),
+          priority: ['high', 'medium', 'low'].indexOf(t.priority) >= 0 ? t.priority : 'medium',
+          done: !!t.done,
+          created: Number(t.created) > 0 ? Number(t.created) : Date.now()
+        }));
+    } catch (e) { return []; }
+  }
+  seed() {
+    const now = Date.now();
+    const s = [
+      ['Draft the Q3 orbit review', 'high', false],
+      ['Reply to the lab about sample prep', 'medium', false],
+      ['Reread chapter 4 on wave mechanics', 'medium', true],
+      ['Water the plants', 'low', false],
+      ['File the telescope booking', 'low', true],
+      ['Outline the launch narrative', 'high', false]
+    ].map((r, i) => ({ id: this.uid(), title: r[0], priority: r[1], done: r[2], created: now - (6 - i) * 36e5 }));
+    this.persist(s);
+    return s;
+  }
+  persist(tasks) { try { localStorage.setItem('focuslist_tasks', JSON.stringify(tasks)); } catch (e) {} }
+  commit(tasks) { this.persist(tasks); this.setState({ tasks: tasks }); }
+
+  /* ---------- task engine ---------- */
+  addTask(title, priority) {
+    const t = { id: this.uid(), title: title, priority: priority, done: false, created: Date.now() };
+    this.commit(this.state.tasks.concat([t]));
+    this.pendingBurst = { id: t.id, color: this.PC[priority], n: 26 };
+  }
+  toggle(id) {
+    const tasks = this.state.tasks.map(t => t.id === id ? Object.assign({}, t, { done: !t.done }) : t);
+    const t = tasks.find(x => x.id === id);
+    this.commit(tasks);
+    if (t && t.done) this.pendingBurst = { id: id, color: '#c3d3a5', n: 30 };
+  }
+  remove(id) {
+    const n = this.nodes.get(id);
+    if (n) this.burstAt(n.sx, n.sy, n.color, 22);
+    this.commit(this.state.tasks.filter(t => t.id !== id));
+    if (this.state.selectedId === id) this.setState({ selectedId: null });
+    if (this.state.editingId === id) this.setState({ editingId: null });
+  }
+  filtered(st) {
+    const q = st.q.trim().toLowerCase();
+    return st.tasks.filter(t =>
+      (st.status === 'all' || (st.status === 'active' ? !t.done : t.done)) &&
+      (st.prio === 'all' || t.priority === st.prio) &&
+      (!q || t.title.toLowerCase().indexOf(q) >= 0));
+  }
+
+  /* ---------- lifecycle ---------- */
+  componentDidMount() {
+    this.setState({ tasks: this.load() });
+    this.initCosmos();
+    this.onResize = () => this.sizeCanvases();
+    window.addEventListener('resize', this.onResize);
+    this.onMove = e => {
+      this.cam.tpx = (e.clientX / window.innerWidth - 0.5) * 2;
+      this.cam.tpy = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener('pointermove', this.onMove, { passive: true });
+    this.onKey = e => {
+      const tag = (e.target && e.target.tagName) || '';
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable);
+      if (e.key === 'Escape') { if (this.state.editingId) this.closeEdit(); else if (this.state.selectedId) this.setState({ selectedId: null }); return; }
+      if (typing) return;
+      if (e.key === '+' || e.key === '=') { this.zoomBy(1.25); e.preventDefault(); }
+      else if (e.key === '-' || e.key === '_') { this.zoomBy(0.8); e.preventDefault(); }
+      else if (e.key === '0') { this.resetView(); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', this.onKey);
+    const c = this.constRef.current;
+    if (c) {
+      this.cMove = e => this.pointerOnConst(e);
+      this.cLeave = () => { this.hoverId = null; this.hideTip(); };
+      this.cClick = e => this.clickConst(e);
+      this.cWheel = e => { e.preventDefault(); this.zoomBy(e.deltaY < 0 ? 1.12 : 0.9); };
+      c.addEventListener('pointermove', this.cMove, { passive: true });
+      c.addEventListener('pointerleave', this.cLeave);
+      c.addEventListener('click', this.cClick);
+      c.addEventListener('wheel', this.cWheel, { passive: false });
+    }
+    this.t0 = performance.now();
+    this.introDur = this.reduced ? 700 : 3400;
+    this.raf = requestAnimationFrame(this.loop);
+    this.introTimer = setTimeout(() => this.skipIntro(), this.introDur);
+  }
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    clearTimeout(this.introTimer);
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('pointermove', this.onMove);
+    window.removeEventListener('keydown', this.onKey);
+    const c = this.constRef.current;
+    if (c) {
+      c.removeEventListener('pointermove', this.cMove);
+      c.removeEventListener('pointerleave', this.cLeave);
+      c.removeEventListener('click', this.cClick);
+      c.removeEventListener('wheel', this.cWheel);
+    }
+  }
+  componentDidUpdate(pp, ps) {
+    this.syncNodes();
+    this.updateBars();
+    if (this.state.editingId && !ps.editingId) {
+      const el = this.editRef.current;
+      if (el) { el.value = (this.state.tasks.find(t => t.id === this.state.editingId) || {}).title || ''; el.focus(); el.select(); }
+    }
+    if (this.state.selectedId && this.state.selectedId !== ps.selectedId) this.focusNode(this.state.selectedId);
+  }
+
+  /* ---------- cosmos ---------- */
+  rnd(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+  initCosmos() {
+    const w = window.innerWidth;
+    const cores = navigator.hardwareConcurrency || 4;
+    const dens = this.props.density || 'balanced';
+    let tier = (cores >= 8 && w >= 1200) ? 2 : (w >= 760 ? 1 : 0);
+    if (dens === 'calm') tier = Math.max(0, tier - 1);
+    if (dens === 'rich') tier = Math.min(2, tier + 1);
+    this.tier = tier;
+    this.dpr = Math.min(window.devicePixelRatio || 1, tier === 2 ? 2 : 1.5);
+    const counts = [520, 1200, 2000];
+    const r = this.rnd(20260919);
+    const n = counts[tier];
+    this.stars = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const cluster = r() < 0.35;
+      const cx = cluster ? (r() * 2 - 1) * 0.55 : 0;
+      const cy = cluster ? (r() * 2 - 1) * 0.55 : 0;
+      const sp = cluster ? 0.32 : 1.25;
+      this.stars[i] = {
+        x: cx + (r() * 2 - 1) * sp, y: cy + (r() * 2 - 1) * sp,
+        z: 0.06 + r() * 0.94, r: 0.4 + r() * 1.5,
+        b: 0.35 + r() * 0.65, ph: r() * 6.28, tw: 0.4 + r() * 1.8,
+        c: r() < 0.08 ? '#ffd7a8' : (r() < 0.12 ? '#b9d8ff' : '#f6f2ea')
+      };
+    }
+    this.stars.sort((a, b) => a.c < b.c ? -1 : 1);
+    this.dust = [];
+    const dn = [40, 90, 150][tier];
+    for (let i = 0; i < dn; i++) this.dust.push({ x: r() * 2 - 1, y: r() * 2 - 1, z: 0.05 + r() * 0.5, r: 0.6 + r() * 1.6, a: 0.15 + r() * 0.4 });
+    this.sizeCanvases();
+  }
+  sizeCanvases() {
+    const bg = this.bgRef.current, cc = this.constRef.current;
+    if (bg) {
+      const w = window.innerWidth, h = window.innerHeight;
+      bg.width = Math.round(w * this.dpr); bg.height = Math.round(h * this.dpr);
+      this.bgCtx = bg.getContext('2d');
+      this.bgW = w; this.bgH = h;
+      this.bgCtx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      const g = this.bgCtx.createLinearGradient(0, 0, w * 0.4, h);
+      g.addColorStop(0, '#08070d'); g.addColorStop(0.55, '#0a0812'); g.addColorStop(1, '#07060b');
+      this.skyGrad = g;
+      this.buildNebula(w, h);
+    }
+    if (cc) {
+      const rect = cc.getBoundingClientRect();
+      cc.width = Math.max(1, Math.round(rect.width * this.dpr));
+      cc.height = Math.max(1, Math.round(rect.height * this.dpr));
+      this.cCtx = cc.getContext('2d');
+      this.cW = rect.width; this.cH = rect.height;
+    }
+  }
+  buildNebula(w, h) {
+    const sc = 0.4;
+    const nw = Math.max(2, Math.round(w * sc)), nh = Math.max(2, Math.round(h * sc));
+    const cv = this.nebCv || (this.nebCv = document.createElement('canvas'));
+    cv.width = nw; cv.height = nh;
+    const x = cv.getContext('2d');
+    x.clearRect(0, 0, nw, nh);
+    x.globalCompositeOperation = 'lighter';
+    if (x.filter !== undefined) x.filter = 'blur(' + Math.round(nw * 0.035) + 'px)';
+    const r = this.rnd(777);
+    const cols = ['rgba(64,52,150,', 'rgba(38,84,150,', 'rgba(120,52,140,', 'rgba(32,120,138,', 'rgba(150,84,44,'];
+    const blobs = [7, 11, 15][this.tier];
+    for (let i = 0; i < blobs; i++) {
+      const bx = r() * nw, by = r() * nh, rad = nw * (0.12 + r() * 0.3);
+      const col = cols[(r() * cols.length) | 0];
+      const g = x.createRadialGradient(bx, by, 0, bx, by, rad);
+      g.addColorStop(0, col + (0.16 + r() * 0.14) + ')');
+      g.addColorStop(0.5, col + 0.05 + ')');
+      g.addColorStop(1, col + '0)');
+      x.fillStyle = g; x.beginPath(); x.arc(bx, by, rad, 0, 6.2832); x.fill();
+    }
+    // distant galactic structures
+    for (let i = 0; i < 2; i++) {
+      const bx = r() * nw, by = r() * nh, rad = nw * (0.07 + r() * 0.05);
+      x.save(); x.translate(bx, by); x.rotate(r() * 3.14); x.scale(1, 0.32);
+      const g = x.createRadialGradient(0, 0, 0, 0, 0, rad);
+      g.addColorStop(0, 'rgba(226,214,255,0.22)');
+      g.addColorStop(0.4, 'rgba(150,140,220,0.08)');
+      g.addColorStop(1, 'rgba(120,110,200,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(0, 0, rad, 0, 6.2832); x.fill(); x.restore();
+    }
+    if (x.filter !== undefined) x.filter = 'none';
+  }
+
+  /* ---------- nodes ---------- */
+  syncNodes() {
+    const tasks = this.state.tasks;
+    const live = new Set();
+    const vis = new Set(this.filtered(this.state).map(t => t.id));
+    tasks.forEach((t, i) => {
+      live.add(t.id);
+      let n = this.nodes.get(t.id);
+      if (!n) {
+        n = { id: t.id, a: (i * 2.399) % 6.2832, ring: 0, born: 0, sx: 0, sy: 0, rr: 0, alpha: 0 };
+        this.nodes.set(t.id, n);
+      }
+      n.ring = i % 3;
+      n.idx = i;
+      n.done = t.done;
+      n.title = t.title;
+      n.priority = t.priority;
+      n.color = t.done ? '#8ea073' : this.PC[t.priority];
+      n.target = vis.has(t.id) ? 1 : 0.14;
+      n.rad = (t.priority === 'high' ? 7.5 : t.priority === 'medium' ? 6 : 5) * (t.done ? 0.72 : 1);
+    });
+    this.nodes.forEach((v, k) => { if (!live.has(k)) this.nodes.delete(k); });
+    const per = {};
+    tasks.forEach(t => { const n = this.nodes.get(t.id); per[n.ring] = (per[n.ring] || 0) + 1; });
+    const seen = {};
+    tasks.forEach(t => {
+      const n = this.nodes.get(t.id);
+      seen[n.ring] = (seen[n.ring] || 0) + 1;
+      n.slot = (seen[n.ring] - 1) / Math.max(1, per[n.ring]);
+    });
+    if (this.pendingBurst) {
+      const b = this.pendingBurst; this.pendingBurst = null;
+      const n = this.nodes.get(b.id);
+      if (n && n.sx) this.burstAt(n.sx, n.sy, b.color, b.n);
+    }
+  }
+  burstAt(x, y, color, n) {
+    if (this.reduced) return;
+    const max = 320;
+    for (let i = 0; i < n && this.parts.length < max; i++) {
+      const a = Math.random() * 6.2832, s = 0.4 + Math.random() * 2.2;
+      this.parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, l: 1, c: color });
+    }
+  }
+  focusNode(id) {
+    const n = this.nodes.get(id);
+    if (!n) return;
+    this.view.ts = 2.1;
+    this.view.tx = (this.cW / 2 - n.bx) * 2.1;
+    this.view.ty = (this.cH / 2 - n.by) * 2.1;
+  }
+  zoomBy(k) {
+    this.view.ts = Math.max(0.6, Math.min(3.2, this.view.ts * k));
+    if (this.view.ts <= 1.02) { this.view.tx = 0; this.view.ty = 0; }
+  }
+  zoomIn = () => this.zoomBy(1.25);
+  zoomOut = () => this.zoomBy(0.8);
+  resetView = () => { this.view.ts = 1; this.view.tx = 0; this.view.ty = 0; this.setState({ selectedId: null }); };
+
+  hitTest(e) {
+    const c = this.constRef.current; if (!c) return null;
+    const r = c.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bd = 20 * 20;
+    this.nodes.forEach(n => {
+      const dx = mx - n.sx, dy = my - n.sy, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = n; }
+    });
+    return { node: best, mx: mx, my: my };
+  }
+  pointerOnConst(e) {
+    const h = this.hitTest(e); if (!h) return;
+    const tip = this.tipRef.current;
+    this.hoverId = h.node ? h.node.id : null;
+    const c = this.constRef.current;
+    if (c) c.style.cursor = h.node ? 'pointer' : 'crosshair';
+    if (!tip) return;
+    if (h.node) {
+      tip.style.display = 'block';
+      tip.style.left = h.node.sx + 'px';
+      tip.style.top = h.node.sy + 'px';
+      tip.textContent = h.node.title + ' · ' + h.node.priority.toUpperCase() + ' · ' + (h.node.done ? 'complete' : 'pending');
+    } else tip.style.display = 'none';
+  }
+  hideTip() { const t = this.tipRef.current; if (t) t.style.display = 'none'; }
+  clickConst(e) {
+    const h = this.hitTest(e); if (!h) return;
+    if (h.node) this.setState({ selectedId: h.node.id });
+    else { this.setState({ selectedId: null }); this.view.ts = 1; this.view.tx = 0; this.view.ty = 0; }
+  }
+
+  /* ---------- loop ---------- */
+  loop = (now) => {
+    this.raf = requestAnimationFrame(this.loop);
+    const t = (now - this.t0) / 1000;
+    const dt = Math.min(0.05, (now - (this.last || now)) / 1000);
+    this.last = now;
+    const p = Math.min(1, (now - this.t0) / this.introDur);
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    this.cam.z = ease * 0.88;
+    this.cam.px += (this.cam.tpx - this.cam.px) * 0.05;
+    this.cam.py += (this.cam.tpy - this.cam.py) * 0.05;
+    this.view.s += (this.view.ts - this.view.s) * 0.12;
+    this.view.x += (this.view.tx - this.view.x) * 0.12;
+    this.view.y += (this.view.ty - this.view.y) * 0.12;
+    this.drawCosmos(t, p);
+    this.drawConstellation(t, dt);
+    this.tickNumbers();
+  };
+
+  drawCosmos(t, p) {
+    const x = this.bgCtx; if (!x) return;
+    const W = this.bgW, H = this.bgH, cx = W / 2, cy = H / 2;
+    x.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    x.fillStyle = this.skyGrad; x.fillRect(0, 0, W, H);
+    if (this.nebCv) {
+      const dr = this.reduced ? 0 : Math.sin(t * 0.05) * 14;
+      const sc = 1.08 + this.cam.z * 0.12;
+      x.globalAlpha = 0.9;
+      x.drawImage(this.nebCv, -W * (sc - 1) / 2 + dr - this.cam.px * 12, -H * (sc - 1) / 2 + Math.cos(t * 0.04) * 10 - this.cam.py * 12, W * sc, H * sc);
+      x.globalAlpha = 1;
+    }
+    const streak = !this.reduced && p < 1;
+    const zf = this.cam.z * 0.9;
+    let cur = '';
+    const S = this.stars;
+    for (let i = 0; i < S.length; i++) {
+      const s = S[i];
+      let ez = s.z - zf;
+      if (ez <= 0.02) ez += 1;
+      const k = 0.85 / ez;
+      const sx = cx + s.x * cx * k + this.cam.px * (1.2 - ez) * 26;
+      const sy = cy + s.y * cy * k + this.cam.py * (1.2 - ez) * 26;
+      if (sx < -40 || sx > W + 40 || sy < -40 || sy > H + 40) continue;
+      const tw = 0.6 + 0.4 * Math.sin(t * s.tw + s.ph);
+      const a = Math.min(1, s.b * tw * Math.min(1, k * 0.9));
+      if (a < 0.03) continue;
+      if (s.c !== cur) { cur = s.c; x.fillStyle = s.c; }
+      x.globalAlpha = a;
+      const r = Math.min(3.4, s.r * Math.max(0.5, k * 0.55));
+      if (streak && k > 1.6) {
+        const pk = 0.85 / (ez + 0.045);
+        x.strokeStyle = s.c; x.lineWidth = Math.max(0.7, r * 0.8);
+        x.beginPath();
+        x.moveTo(cx + s.x * cx * pk + this.cam.px * (1.2 - ez) * 26, cy + s.y * cy * pk + this.cam.py * (1.2 - ez) * 26);
+        x.lineTo(sx, sy); x.stroke();
+      } else if (r < 1.2) x.fillRect(sx, sy, r * 1.4, r * 1.4);
+      else { x.beginPath(); x.arc(sx, sy, r, 0, 6.2832); x.fill(); }
+    }
+    x.globalAlpha = 1;
+    x.fillStyle = '#cfe4ff';
+    for (let i = 0; i < this.dust.length; i++) {
+      const d = this.dust[i];
+      let ez = d.z - zf * 0.6;
+      if (ez <= 0.02) ez += 0.6;
+      const k = 0.6 / ez;
+      const sx = cx + d.x * cx * k + this.cam.px * 40;
+      const sy = cy + (d.y + (this.reduced ? 0 : (t * 0.012) % 2 - 1)) * cy * k;
+      if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
+      x.globalAlpha = d.a * Math.min(1, k * 0.4);
+      x.fillRect(sx, sy, d.r, d.r);
+    }
+    x.globalAlpha = 1;
+    if (p < 1) {
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.42);
+      const glow = Math.max(0, p - 0.45) / 0.55;
+      g.addColorStop(0, 'rgba(240,165,94,' + (0.5 * glow) + ')');
+      g.addColorStop(0.35, 'rgba(198,113,57,' + (0.18 * glow) + ')');
+      g.addColorStop(1, 'rgba(198,113,57,0)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+    }
+  }
+
+  drawConstellation(t, dt) {
+    const x = this.cCtx; if (!x) return;
+    const W = this.cW, H = this.cH;
+    x.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    x.clearRect(0, 0, W, H);
+    x.translate(W / 2 + this.view.x, H / 2 + this.view.y);
+    x.scale(this.view.s, this.view.s);
+    x.translate(-W / 2, -H / 2);
+    const cx = W / 2, cy = H / 2;
+    const total = this.state.tasks.length;
+    const done = this.state.tasks.filter(tk => tk.done).length;
+    const pct = total ? done / total : 0;
+    const base = Math.min(W, H);
+    const speed = (this.props.orbitSpeed == null ? 1 : this.props.orbitSpeed) * (this.reduced ? 0 : 1);
+
+    // orbit rings
+    for (let r = 0; r < 3; r++) {
+      const rad = base * (0.22 + r * 0.11);
+      x.beginPath(); x.arc(cx, cy, rad, 0, 6.2832);
+      x.strokeStyle = 'rgba(245,234,216,' + (0.09 - r * 0.02) + ')';
+      x.lineWidth = 1; x.stroke();
+    }
+    // focus core
+    const energy = 0.6 + 0.4 * pct;
+    const pulse = this.reduced ? 1 : 1 + Math.sin(t * (1.1 + pct)) * 0.05 * energy;
+    const cr = base * 0.115 * pulse;
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, cr * 2.6);
+    g.addColorStop(0, 'rgba(255,220,170,' + (0.55 + 0.35 * pct) + ')');
+    g.addColorStop(0.28, 'rgba(224,138,60,' + (0.4 + 0.25 * pct) + ')');
+    g.addColorStop(0.62, 'rgba(150,80,140,0.14)');
+    g.addColorStop(1, 'rgba(120,70,160,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(cx, cy, cr * 2.6, 0, 6.2832); x.fill();
+    x.beginPath(); x.arc(cx, cy, cr * 0.6, 0, 6.2832);
+    x.fillStyle = 'rgba(255,238,214,' + (0.5 + 0.4 * pct) + ')'; x.fill();
+    // completion arc
+    const ar = base * 0.17;
+    x.lineWidth = Math.max(3, base * 0.014); x.lineCap = 'round';
+    x.beginPath(); x.arc(cx, cy, ar, 0, 6.2832);
+    x.strokeStyle = 'rgba(245,234,216,0.12)'; x.stroke();
+    this.anim.pct += (pct - this.anim.pct) * 0.08;
+    if (this.anim.pct > 0.001) {
+      x.beginPath(); x.arc(cx, cy, ar, -Math.PI / 2, -Math.PI / 2 + 6.2832 * this.anim.pct);
+      x.strokeStyle = '#aebf92'; x.stroke();
+    }
+    // nodes
+    this.nodes.forEach(n => {
+      const rad = base * (0.235 + n.ring * 0.11);
+      const dir = n.ring % 2 ? -1 : 1;
+      n.a = n.slot * 6.2832 + t * 0.09 * speed * dir * (n.done ? 0.4 : 1) + n.ring * 0.7;
+      const bx = cx + Math.cos(n.a) * rad;
+      const by = cy + Math.sin(n.a) * rad * 0.62;
+      n.bx = bx; n.by = by;
+      n.sx = (bx - cx) * this.view.s + cx + this.view.x;
+      n.sy = (by - cy) * this.view.s + cy + this.view.y;
+      n.alpha += (n.target - n.alpha) * 0.12;
+      const sel = this.state.selectedId === n.id;
+      const hov = this.hoverId === n.id;
+      const r = n.rad * (sel ? 1.7 : hov ? 1.35 : 1);
+      x.globalAlpha = n.alpha;
+      const gg = x.createRadialGradient(bx, by, 0, bx, by, r * 4);
+      gg.addColorStop(0, n.color); gg.addColorStop(0.25, n.color + '66'); gg.addColorStop(1, n.color + '00');
+      x.fillStyle = gg; x.beginPath(); x.arc(bx, by, r * 4, 0, 6.2832); x.fill();
+      x.fillStyle = n.done ? 'rgba(200,214,176,.85)' : '#fff6e8';
+      x.beginPath(); x.arc(bx, by, r * 0.5, 0, 6.2832); x.fill();
+      if (sel) {
+        x.strokeStyle = n.color; x.lineWidth = 1.5;
+        x.beginPath(); x.arc(bx, by, r * 2.2 + Math.sin(t * 3) * 2, 0, 6.2832); x.stroke();
+      }
+      x.globalAlpha = 1;
+    });
+    // particles
+    for (let i = this.parts.length - 1; i >= 0; i--) {
+      const q = this.parts[i];
+      q.x += q.vx; q.y += q.vy; q.vx *= 0.96; q.vy *= 0.96; q.l -= dt * 1.4;
+      if (q.l <= 0) { this.parts.splice(i, 1); continue; }
+      x.globalAlpha = Math.max(0, q.l);
+      x.fillStyle = q.c;
+      x.fillRect(q.x, q.y, 2, 2);
+    }
+    x.globalAlpha = 1;
+  }
+
+  tickNumbers() {
+    const total = this.state.tasks.length;
+    const done = this.state.tasks.filter(t => t.done).length;
+    const pend = total - done;
+    const a = this.anim;
+    a.total += (total - a.total) * 0.15;
+    a.done += (done - a.done) * 0.15;
+    a.pend += (pend - a.pend) * 0.15;
+    const set = (ref, v) => { const e = ref.current; if (e) { const s = String(Math.round(v)); if (e.textContent !== s) e.textContent = s; } };
+    set(this.nTotalRef, a.total); set(this.nDoneRef, a.done); set(this.nPendRef, a.pend);
+    const pe = this.pctRef.current;
+    if (pe) { const s = Math.round(this.anim.pct * 100) + '%'; if (pe.textContent !== s) pe.textContent = s; }
+    const fe = this.fracRef.current;
+    if (fe) { const s = done + ' / ' + total + ' complete'; if (fe.textContent !== s) fe.textContent = s; }
+  }
+  updateBars() {
+    const tasks = this.state.tasks;
+    const max = Math.max(1, tasks.length);
+    ['high', 'medium', 'low'].forEach(p => {
+      const el = this.barRefs[p].current;
+      if (el) el.style.transform = 'scaleX(' + (tasks.filter(t => t.priority === p).length / max) + ')';
+    });
+  }
+
+  /* ---------- handlers ---------- */
+  skipIntro = () => {
+    clearTimeout(this.introTimer);
+    const i = this.introRef.current;
+    if (i) i.style.opacity = '0';
+    const s = this.shellRef.current;
+    if (s) s.style.opacity = '1';
+    setTimeout(() => { if (this.state.intro) this.setState({ intro: false }); }, 700);
+    this.t0 = performance.now() - this.introDur;
+  };
+  onAdd = (e) => {
+    e.preventDefault();
+    const el = this.newRef.current;
+    const v = el ? el.value.trim() : '';
+    const err = this.errRef.current;
+    if (!v) { if (err) err.textContent = 'Give the task a title first.'; if (el) el.focus(); return; }
+    if (err) err.textContent = '';
+    this.addTask(v, this.state.newPrio);
+    if (el) { el.value = ''; el.focus(); }
+  };
+  onSearch = (e) => this.setState({ q: e.target.value });
+  clearSelection = () => { this.setState({ selectedId: null }); this.view.ts = 1; this.view.tx = 0; this.view.ty = 0; };
+  openEdit = (id) => { const t = this.state.tasks.find(x => x.id === id); this.setState({ editingId: id, editPrio: t ? t.priority : 'medium' }); };
+  closeEdit = () => this.setState({ editingId: null });
+  saveEdit = () => {
+    const el = this.editRef.current;
+    const v = el ? el.value.trim() : '';
+    if (!v) { if (el) el.focus(); return; }
+    this.commit(this.state.tasks.map(t => t.id === this.state.editingId ? Object.assign({}, t, { title: v, priority: this.state.editPrio }) : t));
+    this.setState({ editingId: null });
+  };
+  onEditKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); this.saveEdit(); } };
+  onBackdrop = () => this.closeEdit();
+  stop = (e) => e.stopPropagation();
+
+  pillSet(list, current, onPick) {
+    return list.map(o => {
+      const on = current === o.key;
+      const c = o.color || '#c67139';
+      return {
+        key: o.key, label: o.label, on: on,
+        bg: on ? c : 'rgba(245,234,216,.05)',
+        fg: on ? '#160f07' : 'rgba(245,234,216,.72)',
+        border: on ? c : 'rgba(245,234,216,.18)',
+        onClick: () => onPick(o.key)
+      };
+    });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const vis = this.filtered(st);
+    const total = st.tasks.length, done = st.tasks.filter(t => t.done).length;
+    const sel = st.selectedId ? st.tasks.find(t => t.id === st.selectedId) : null;
+    const fmt = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const searching = st.q.trim() || st.status !== 'all' || st.prio !== 'all';
+
+    return {
+      introVisible: st.intro,
+      bgRef: this.bgRef, constRef: this.constRef, shellRef: this.shellRef, introRef: this.introRef,
+      tipRef: this.tipRef, pctRef: this.pctRef, fracRef: this.fracRef,
+      nTotalRef: this.nTotalRef, nDoneRef: this.nDoneRef, nPendRef: this.nPendRef,
+      newRef: this.newRef, searchRef: this.searchRef, errRef: this.errRef,
+      editRef: this.editRef, dialogRef: this.dialogRef, coreLabelRef: this.coreLabelRef,
+      skipIntro: this.skipIntro, zoomIn: this.zoomIn, zoomOut: this.zoomOut, resetView: this.resetView,
+      onAdd: this.onAdd, onSearch: this.onSearch, clearSelection: this.clearSelection,
+      closeEdit: this.closeEdit, saveEdit: this.saveEdit, onEditKey: this.onEditKey,
+      onBackdrop: this.onBackdrop, stop: this.stop,
+
+      liveText: total + ' tasks, ' + done + ' completed, ' + (total - done) + ' pending.',
+      resultText: vis.length + (vis.length === 1 ? ' task' : ' tasks') + ' shown of ' + total,
+
+      newPriorities: this.pillSet(
+        [{ key: 'high', label: 'High', color: this.PC.high }, { key: 'medium', label: 'Medium', color: this.PC.medium }, { key: 'low', label: 'Low', color: this.PC.low }],
+        st.newPrio, k => this.setState({ newPrio: k })),
+      editPriorities: this.pillSet(
+        [{ key: 'high', label: 'High', color: this.PC.high }, { key: 'medium', label: 'Medium', color: this.PC.medium }, { key: 'low', label: 'Low', color: this.PC.low }],
+        st.editPrio, k => this.setState({ editPrio: k })),
+      statusFilters: this.pillSet(
+        [{ key: 'all', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'completed', label: 'Completed' }],
+        st.status, k => this.setState({ status: k })),
+      prioFilters: this.pillSet(
+        [{ key: 'all', label: 'Any priority' }, { key: 'high', label: 'High', color: this.PC.high }, { key: 'medium', label: 'Medium', color: this.PC.medium }, { key: 'low', label: 'Low', color: this.PC.low }],
+        st.prio, k => this.setState({ prio: k })),
+
+      distribution: [
+        { label: 'High', color: this.PC.high, count: st.tasks.filter(t => t.priority === 'high').length, ref: this.barRefs.high },
+        { label: 'Medium', color: this.PC.medium, count: st.tasks.filter(t => t.priority === 'medium').length, ref: this.barRefs.medium },
+        { label: 'Low', color: this.PC.low, count: st.tasks.filter(t => t.priority === 'low').length, ref: this.barRefs.low }
+      ],
+
+      visible: vis.map(t => ({
+        id: t.id, title: t.title, done: t.done,
+        color: t.done ? '#8ea073' : this.PC[t.priority],
+        titleColor: t.done ? 'rgba(245,234,216,.42)' : '#f5ead8',
+        deco: t.done ? 'line-through' : 'none',
+        rowBg: st.selectedId === t.id ? 'rgba(198,113,57,.16)' : 'rgba(245,234,216,.035)',
+        boxBg: t.done ? '#8ea073' : 'transparent',
+        check: t.done ? '✓' : '',
+        meta: t.priority + ' · ' + fmt(t.created),
+        toggleAria: (t.done ? 'Mark incomplete: ' : 'Mark complete: ') + t.title,
+        editAria: 'Edit ' + t.title,
+        delAria: 'Delete ' + t.title,
+        onToggle: () => this.toggle(t.id),
+        onEdit: () => this.openEdit(t.id),
+        onDelete: () => this.remove(t.id),
+        onSelect: () => this.setState({ selectedId: t.id })
+      })),
+
+      isEmpty: vis.length === 0,
+      emptyTitle: total === 0 ? 'Nothing on your plate.' : (searching ? 'No matching tasks.' : "You're clear."),
+      emptyBody: total === 0 ? 'Add your first task and begin your focus journey.' : (searching ? 'Try a different search or loosen the filters.' : 'Every task in the constellation is complete.'),
+
+      hasSelection: !!sel,
+      sel: sel ? {
+        title: sel.title,
+        color: sel.done ? '#8ea073' : this.PC[sel.priority],
+        meta: sel.priority.toUpperCase() + ' · ' + (sel.done ? 'Complete' : 'Pending') + ' · created ' + fmt(sel.created),
+        toggleLabel: sel.done ? 'Mark incomplete' : 'Mark complete',
+        onToggle: () => this.toggle(sel.id),
+        onEdit: () => this.openEdit(sel.id),
+        onDelete: () => this.remove(sel.id)
+      } : { title: '', color: '#c67139', meta: '', toggleLabel: '' },
+
+      editing: !!st.editingId
+    };
+  }
+}
+
+</script>
+</body>
+</html>
